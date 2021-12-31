@@ -3,12 +3,14 @@ import os
 import tkinter
 from tkinter import filedialog
 
+current_dir = os.getcwd()
+
 
 def browse_multiple_images():
     root = tkinter.Tk()
     root.withdraw()
 
-    images_paths = filedialog.askopenfilenames(initialdir='D:\Programming\College Study\IG\waterMarking\lib',
+    images_paths = filedialog.askopenfilenames(initialdir=current_dir + 'lib',
                                                title='Please select images')
     return images_paths
 
@@ -17,7 +19,7 @@ def browse_image():
     root = tkinter.Tk()
     root.withdraw()
 
-    images_path = filedialog.askopenfilename(initialdir='D:\Programming\College Study\IG\waterMarking\lib',
+    images_path = filedialog.askopenfilename(initialdir=current_dir + 'lib',
                                              title='Please select a watermark')
     return images_path
 
@@ -35,7 +37,7 @@ def select_img_options():
 def select_watermark_options():
     select_options = int(input("Choose watermark type : \n 1- image \n 2- text \n"))
     if select_options == 1:
-        return select_img_options()
+        return browse_image()
     elif select_options == 2:
         return str(input("enter watermark context : \n"))
     else:
@@ -83,13 +85,20 @@ def place_text_watermark(img, watermark_text, pos):
     font = cv.FONT_HERSHEY_SIMPLEX
 
     fontScale = 1
-    color = (255, 0, 0)
+    color = (255, 255, 255)
     thickness = 2
+
     cv.putText(img, watermark_text, pos, font, fontScale, color, thickness, cv.LINE_AA)
+
+    opacity = 40/100
+    overlay = img.copy()
+    output = img.copy()
+
+    cv.addWeighted(overlay, opacity, output, 1 - opacity, 0, output)
+    return output
 
 
 def calcTextWatermarkPos(text, img):
-
     font = cv.FONT_HERSHEY_SIMPLEX
 
     textsize, _ = cv.getTextSize(text, font, 1, 2)
@@ -111,19 +120,20 @@ if __name__ == '__main__':
         filename = os.path.basename(img_path)
 
         if os.path.exists(watermark_type):
+
             watermark_img = cv.imread(watermark_type)
             watermark_img = resize(10, watermark_img)
 
             watermark_pos = calcCoordinates(img, watermark_img)
             image_after_watermark = place_watermark(watermark_pos, watermark_img, img)
 
-            cv.imwrite('D:\Programming\College Study\IG\waterMarking\lib\watermarked_image_' + filename, img)
+            cv.imwrite(current_dir + '\lib\watermarked_image_' + filename, img)
 
         else:
             watermark_text = watermark_type
 
             pos = calcTextWatermarkPos(watermark_text, img)
-            place_text_watermark(img, watermark_text, pos)
-            cv.imwrite('D:\Programming\College Study\IG\waterMarking\lib\watermarked_text_' + filename, img)
+            output = place_text_watermark(img, watermark_text, pos)
+            cv.imwrite(current_dir + '\lib\watermarked_text_' + filename, output)
 
     cv.waitKey(0)
